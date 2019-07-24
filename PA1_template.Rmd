@@ -64,7 +64,7 @@ The following code calculates the average number of steps taken per 5-minute int
 - stepsperinterval: Dataframe(288 x 2). Average number of steps per 5-minute intervals across all days
 - maxinterval: Numeric. 5-minute interval with the maximum number of average steps across all days.
 
-```{r}
+```{r echo = TRUE}
 stepsperinterval <- activity %>% 
         filter(!is.na(steps)) %>%
         group_by(interval) %>% 
@@ -94,7 +94,7 @@ The following code calculates the total number of NAs in the dataset, imputes th
 - meansteps_imputed: Numeric. Mean of the total number of steps taken per day in the imputed dataset.
 - mediansteps_imputed: Numeric. Median of the total number of steps taken per day in the imputed dataset.
 
-```{r}
+```{r echo = TRUE}
 totalNA <- sum(is.na(activity))
 totalNA
 
@@ -128,7 +128,8 @@ There are `r totalNA` NAs in the dataset. The mean and median of the total numbe
 
 The following code creates a new factor variable in the imputed dataset called "week_end"
 - activity_imputed: Dataframe (17568 x 4). Imputed dataset with a new factor "week_end" factor variable.
-```{r}
+
+```{r echo = TRUE}
 activity_imputed <- activity_imputed %>%
         mutate(week_end = ifelse(weekdays(date) == "Saturday" | weekdays(date) == "Sunday", "weekend", "weekday"))
 activity_imputed$week_end <- as.factor(activity_imputed$week_end)
