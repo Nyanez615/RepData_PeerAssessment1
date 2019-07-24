@@ -5,21 +5,141 @@ output:
     keep_md: true
 ---
 
-
 ## Loading and preprocessing the data
 
+The following code chunk loads the tidyverse package. It then checks if the file "activity.csv" is available in the workspace. If it isn't, it unzips "activity.zip". Afterwards, the database is loaded into a dataframe named "activity". Variables:
 
+- filename: String, indicates the name of the .csv file that contains the database.
+- activity: Dataframe (17568 x 3). Raw data.
+
+```{r echo = TRUE}
+library(tidyverse)
+
+filename <- "activity.csv"
+
+if (!file.exists(filename)) {
+        unzips("activity.zip")
+}
+
+activity <- read_csv(filename)
+str(activity)
+head(activity)
+tail(activity)
+```
 
 ## What is mean total number of steps taken per day?
 
+The following code chunk calculates the total number of steps per day, plots them in a histogram and then calculates their mean and median.
 
+- stepsperday: Dataframe (61 x 2). Total number of steps taken per day
+- meansteps: Numeric. Mean of total number of steps taken per day
+- mediansteps: Numeric. Median of total number of steps taken per day
+
+```{r echo = TRUE}
+stepsperday <- activity %>% 
+        filter(!is.na(steps)) %>%
+        group_by(date) %>% 
+        summarize(totalsteps = sum(steps))
+str(stepsperday)
+head(stepsperday)
+tail(stepsperday)
+
+stepsperday %>% 
+        ggplot(aes(x = totalsteps)) + 
+        geom_histogram() + 
+        labs(x = "Number of steps", y = "Count", title = "Total number of steps taken each day")
+
+meansteps <- with(stepsperday, mean(totalsteps))
+meansteps
+
+mediansteps <- with(stepsperday, median(totalsteps))
+mediansteps
+```
+
+The mean and median of the total number of steps taken per day are `r meansteps` and `r mediansteps`, respectively.
 
 ## What is the average daily activity pattern?
 
+The following code calculates the average number of steps taken per 5-minute intervals across days of observation, plots them in a time-series plot, and prints the 5-minute interval with the maximum number of average steps.
+- stepsperinterval: Dataframe(288 x 2). Average number of steps per 5-minute intervals across all days
+- maxinterval: Numeric. 5-minute interval with the maximum number of average steps across all days.
 
+```{r}
+stepsperinterval <- activity %>% 
+        filter(!is.na(steps)) %>%
+        group_by(interval) %>% 
+        summarize(averagestepsperinterval = mean(steps, na.rm = TRUE))
+str(stepsperinterval)
+head(stepsperinterval)
+tail(stepsperinterval)
+
+stepsperinterval %>%
+        ggplot(aes(x = interval, y = averagestepsperinterval)) +
+        geom_line() +
+        labs(x = "5-minute intervals", y = "Average number of steps", title = "Average number of steps taken per 5-minute intervals across all days")
+
+maxinterval <- stepsperinterval[which.max(stepsperinterval$averagestepsperinterval), ][, 1]
+maxinterval
+```
+
+The 5-minute interval that contains the maximum number of steps on average across all days is the `r maxinterval` interval.
 
 ## Imputing missing values
 
+The following code calculates the total number of NAs in the dataset, imputes the missing values with their corresponding 5-interval mean across all days, creates a new dataset "activity_imputed" with the imputed data, plots a histogram the total number of steps taken each day in "activity_imputed", and prints their mean and median.
 
+- totalNA: Integer. Total number of NAs in the dataset.
+- activity_imputed: Dataframe (17568 x 3). Dataframe with missing values imputed as their corresponding 5-minute interval averages.
+- stepsperday_imputed: Dataframe (61 x 2). Total number of steps taken per day in the imputed dataset.
+- meansteps_imputed: Numeric. Mean of the total number of steps taken per day in the imputed dataset.
+- mediansteps_imputed: Numeric. Median of the total number of steps taken per day in the imputed dataset.
+
+```{r}
+totalNA <- sum(is.na(activity))
+totalNA
+
+activity_imputed <- activity
+missing <- is.na(activity_imputed$steps)
+meaninterval <- tapply(activity_imputed$steps, activity_imputed$interval, mean, na.rm = TRUE, simplify = TRUE)
+activity_imputed$steps[missing] <- meaninterval[as.character(activity_imputed$interval[missing])]
+str(activity_imputed)
+head(activity_imputed)
+tail(activity_imputed)
+
+stepsperday_imputed <- activity_imputed %>%
+        group_by(date) %>%
+        summarize(totalsteps = sum(steps))
+
+stepsperday_imputed %>%
+        ggplot(aes(x = totalsteps)) + 
+        geom_histogram() + 
+        labs(x = "Number of steps", y = "Count", title = "Total number of steps taken each day, imputed")
+
+meansteps_imputed <- with(stepsperday_imputed, mean(totalsteps))
+meansteps_imputed
+
+mediansteps_imputed <- with(stepsperday_imputed, median(totalsteps))
+mediansteps_imputed
+```
+
+There are `r totalNA` NAs in the dataset. The mean and median of the total number of steps taken each day after imputation are `r meansteps_imputed` and `r mediansteps_imputed`, respectively. The impact of imputing missing data is almost negligible in terms of changes of the mean and median.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+The following code creates a new factor variable in the imputed dataset called "week_end"
+- activity_imputed: Dataframe (17568 x 4). Imputed dataset with a new factor "week_end" factor variable.
+```{r}
+activity_imputed <- activity_imputed %>%
+        mutate(week_end = ifelse(weekdays(date) == "Saturday" | weekdays(date) == "Sunday", "weekend", "weekday"))
+activity_imputed$week_end <- as.factor(activity_imputed$week_end)
+
+activity_imputed %>%
+        group_by(interval, week_end) %>%
+        summarize(totalsteps = mean(steps)) %>%
+        ggplot(aes(x = interval, y = totalsteps)) +
+        geom_line() + 
+        facet_grid(rows = vars(week_end)) +
+        labs(x = "5-minute intervals", y = "Average number of steps", title = "Average number of steps taken per 5-minute interval and across all weekdays and weekends")
+        
+```
+
