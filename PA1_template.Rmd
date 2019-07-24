@@ -48,6 +48,7 @@ stepsperday %>%
         ggplot(aes(x = totalsteps)) + 
         geom_histogram() + 
         labs(x = "Number of steps", y = "Count", title = "Total number of steps taken each day")
+ggsave("first histogram.png", path = "./figures/", width = 5, height = 5)
 
 meansteps <- with(stepsperday, mean(totalsteps))
 meansteps
@@ -64,7 +65,7 @@ The following code calculates the average number of steps taken per 5-minute int
 - stepsperinterval: Dataframe(288 x 2). Average number of steps per 5-minute intervals across all days
 - maxinterval: Numeric. 5-minute interval with the maximum number of average steps across all days.
 
-```{r echo = TRUE}
+```{r second_histogram echo = TRUE}
 stepsperinterval <- activity %>% 
         filter(!is.na(steps)) %>%
         group_by(interval) %>% 
@@ -77,6 +78,8 @@ stepsperinterval %>%
         ggplot(aes(x = interval, y = averagestepsperinterval)) +
         geom_line() +
         labs(x = "5-minute intervals", y = "Average number of steps", title = "Average number of steps taken per 5-minute intervals across all days")
+
+ggsave("fist time series.png", path = "./figures/", width = 5, height = 5)
 
 maxinterval <- stepsperinterval[which.max(stepsperinterval$averagestepsperinterval), ][, 1]
 maxinterval
@@ -115,6 +118,8 @@ stepsperday_imputed %>%
         geom_histogram() + 
         labs(x = "Number of steps", y = "Count", title = "Total number of steps taken each day, imputed")
 
+ggsave("second histogram.png", path = "./figures/", width = 5, height = 5)
+
 meansteps_imputed <- with(stepsperday_imputed, mean(totalsteps))
 meansteps_imputed
 
@@ -141,6 +146,8 @@ activity_imputed %>%
         geom_line() + 
         facet_grid(rows = vars(week_end)) +
         labs(x = "5-minute intervals", y = "Average number of steps", title = "Average number of steps taken per 5-minute interval and across all weekdays and weekends")
+
+ggsave("second time series.png", path = "./figures/", width = 5, height = 5)
         
 ```
 
